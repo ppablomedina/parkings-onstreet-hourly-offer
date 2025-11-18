@@ -213,19 +213,19 @@ def calculate_hours_by_schedules(hours_of_azul_service, hours_of_verde_service):
 
     return dicc
 
-def process_segundos(plazas, dicc):
+def process_segundos(historical_places, hours_by_schedules):
 
-    oferta = plazas[["ZONA", "SECTOR", "HORARIO", "ID ZONA", "ID GIS", "NOMBRE DE CALLE", columna]].copy()
-    oferta.rename(columns={columna: 'PLAZAS'}, inplace=True)
+    places_of_this_month = historical_places[["ZONA", "SECTOR", "HORARIO", "ID ZONA", "ID GIS", "NOMBRE DE CALLE", columna]].copy()
+    places_of_this_month.rename(columns={columna: 'PLAZAS'}, inplace=True)
 
-    # coger la columna del mes y año correspondiente de plazas y multiplicar por las segundos del horario correspondiente al dicc
-    oferta['SEGUNDOS'] = oferta['PLAZAS'] * oferta['HORARIO'].map(dicc) * 3600
-    oferta.drop(columns=['PLAZAS'], inplace=True)
+    # coger la columna del mes y año correspondiente de plazas y multiplicar por las segundos del horario correspondiente al hours_by_schedules
+    places_of_this_month['SEGUNDOS'] = places_of_this_month['PLAZAS'] * places_of_this_month['HORARIO'].map(hours_by_schedules) * 3600
+    seconds_of_this_month = places_of_this_month.drop(columns=['PLAZAS'], inplace=True)
 
 
     # RESULTADOS
-    s_verdes = oferta[oferta["ZONA"] == "VERDE"]['SEGUNDOS'].sum() 
-    s_azules = oferta[oferta["ZONA"] ==  "AZUL"]['SEGUNDOS'].sum()
+    s_verdes = seconds_of_this_month[seconds_of_this_month["ZONA"] == "VERDE"]['SEGUNDOS'].sum() 
+    s_azules = seconds_of_this_month[seconds_of_this_month["ZONA"] ==  "AZUL"]['SEGUNDOS'].sum()
     porcentaje_s_verdes = s_verdes / (s_verdes + s_azules) * 100
     porcentaje_s_azules = 100 - porcentaje_s_verdes
 
@@ -233,9 +233,9 @@ def process_segundos(plazas, dicc):
     print(f"Segundos azules: {s_azules} ({porcentaje_s_azules:.2f}%)")
     print(f"TOTAL: {s_verdes + s_azules}")
 
-    oferta.rename(columns={'SEGUNDOS': columna}, inplace=True)
+    seconds_of_this_month.rename(columns={'SEGUNDOS': columna}, inplace=True)
 
-    return oferta
+    return seconds_of_this_month
 
 def merge_with_historical(historical, this_month):
     merged = pd.merge(historical, this_month, on=['ZONA', 'SECTOR', 'HORARIO', 'ID ZONA', 'ID GIS', 'NOMBRE DE CALLE'], how='outer')
